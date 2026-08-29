@@ -3,8 +3,10 @@ import type { Context, Inventory, ViewContext } from "./host.js";
 const node = (document: Document, tag: string, text = "") => { const element = document.createElement(tag); element.textContent = text; return element; };
 function render(container: HTMLElement, inventory: Inventory, error = ""): void {
   container.replaceChildren();
-  const root = node(container.ownerDocument, "section"); root.dataset.node = "process-monitor/root";
-  const list = node(container.ownerDocument, "div"); list.dataset.node = "process-monitor/list";
+  const root = node(container.ownerDocument, "section"); root.dataset.node = "root";
+  Object.assign(root.style, { color: "var(--fg)", background: "var(--card)", padding: "12px", minHeight: "100%", boxSizing: "border-box", fontFamily: "inherit" });
+  const list = node(container.ownerDocument, "div"); list.dataset.node = "list";
+  Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit" });
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
   for (const owner of inventory.owners) {
     const heading = node(container.ownerDocument, "h3", owner.owner); list.append(heading);
