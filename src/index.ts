@@ -9,7 +9,7 @@ function render(container: HTMLElement, inventory: Inventory, rootPath: string |
   Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit" });
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
   const inProject = (cwd: string) => rootPath !== null && (cwd === rootPath || cwd.startsWith(`${rootPath}/`));
-  const owners = inventory.owners.map((owner) => ({ ...owner, processes: owner.processes.filter((process) => inProject(process.cwd)) })).filter((owner) => owner.processes.length > 0);
+  const owners = inventory.owners.map((owner) => ({ ...owner, processes: (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => inProject(process.cwd)) })).filter((owner) => owner.processes.length > 0);
   if (!rootPath) { const missing = node(container.ownerDocument, "p", "PROJECT_ROOT_UNAVAILABLE"); missing.dataset.node = "project-root-error"; list.append(missing); }
   else if (owners.length === 0) { const empty = node(container.ownerDocument, "p", "No owned processes in this project"); empty.dataset.node = "empty"; list.append(empty); }
   for (const owner of owners) {
