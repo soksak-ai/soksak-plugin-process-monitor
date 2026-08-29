@@ -1,6 +1,11 @@
-import type { Context, Inventory, ViewContext } from "./host.js";
+import type { Context, Inventory, ProcessRecord, ViewContext } from "./host.js";
 
 const node = (document: Document, tag: string, text = "") => { const element = document.createElement(tag); element.textContent = text; return element; };
+export function selectProjectProcesses(inventory: Inventory, rootPath: string | null): ProcessRecord[] {
+  if (!rootPath) return [];
+  const inProject = (cwd: string) => cwd === rootPath || cwd.startsWith(`${rootPath}/`);
+  return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => inProject(process.cwd)));
+}
 function render(container: HTMLElement, inventory: Inventory, rootPath: string | null, error = ""): void {
   container.replaceChildren();
   const root = node(container.ownerDocument, "section"); root.dataset.node = "root";
@@ -8,8 +13,8 @@ function render(container: HTMLElement, inventory: Inventory, rootPath: string |
   const list = node(container.ownerDocument, "div"); list.dataset.node = "list";
   Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit" });
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
-  const inProject = (cwd: string) => rootPath !== null && (cwd === rootPath || cwd.startsWith(`${rootPath}/`));
-  const owners = inventory.owners.map((owner) => ({ ...owner, processes: (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => inProject(process.cwd)) })).filter((owner) => owner.processes.length > 0);
+  const selected = new Set(selectProjectProcesses(inventory, rootPath).map((process) => process.id));
+  const owners = inventory.owners.map((owner) => ({ ...owner, processes: (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => selected.has(process.id)) })).filter((owner) => owner.processes.length > 0);
   if (!rootPath) { const missing = node(container.ownerDocument, "p", "PROJECT_ROOT_UNAVAILABLE"); missing.dataset.node = "project-root-error"; list.append(missing); }
   else if (owners.length === 0) { const empty = node(container.ownerDocument, "p", "No owned processes in this project"); empty.dataset.node = "empty"; list.append(empty); }
   for (const owner of owners) {
