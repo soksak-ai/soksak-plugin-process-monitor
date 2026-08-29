@@ -1,0 +1,28 @@
+{
+  "id": "soksak-plugin-process-monitor",
+  "name": { "en": "Process Monitor", "ko": "프로세스 모니터" },
+  "version": "0.0.1",
+  "appVersionRequirement": "0.0.1",
+  "description": {
+    "en": "Read-only view of processes published by installed owners.",
+    "ko": "설치된 owner가 공개한 프로세스를 읽기 전용으로 표시합니다."
+  },
+  "entry": "main.js",
+  "permissions": ["ui", "commands"],
+  "contributes": {
+    "views": [{
+      "id": "process-monitor",
+      "title": { "en": "Processes", "ko": "프로세스" },
+      "icon": "◉",
+      "surfaces": ["side"]
+    }],
+    "commands": [{
+      "name": "refresh",
+      "title": { "en": "Refresh process inventory", "ko": "프로세스 inventory 새로고침" }
+    }],
+    "nodes": [
+      { "id": "root", "description": { "en": "Process monitor root", "ko": "프로세스 모니터 루트" } },
+      { "id": "list", "description": { "en": "Published process records", "ko": "공개된 프로세스 목록" } }
+    ]
+  }
+}

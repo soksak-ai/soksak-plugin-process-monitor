@@ -1,0 +1,19 @@
+{
+  "name": "soksak-plugin-process-monitor",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "26.7.0" },
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test scripts/*.node.mjs",
+    "verify": "pnpm typecheck && pnpm test && node build.mjs --check"
+  },
+  "devDependencies": {
+    "@types/node": "26.2.0",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}
