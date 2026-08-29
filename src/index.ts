@@ -20,7 +20,9 @@ export default {
     let current: Inventory = { owners: [] };
     const refresh = async () => {
       const result = await app.commands?.execute("process.inventory");
-      if (result) { current = result as unknown as Inventory; }
+      if (result?.ok !== true) return current;
+      const payload = result.data as { owners?: unknown } | undefined;
+      if (payload && Array.isArray(payload.owners)) current = payload as Inventory;
       return current;
     };
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
