@@ -31,6 +31,6 @@ export default {
       return current;
     };
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
-    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, _view: ViewContext) { void refresh().then((inventory) => render(container, inventory, failure)); }, unmount(container: HTMLElement) { container.replaceChildren(); } }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, _view: ViewContext) { render(container, current, "loading process inventory"); void refresh().then((inventory) => render(container, inventory, failure)); }, unmount(container: HTMLElement) { container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };
