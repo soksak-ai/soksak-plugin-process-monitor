@@ -26,6 +26,8 @@ export default {
     const app = ctx.app;
     let current: Inventory = { owners: [] };
     let failure = "";
+    const mounted = new Map<HTMLElement, string | null>();
+    const repaint = () => mounted.forEach((rootPath, container) => render(container, current, rootPath, failure));
     const refresh = async () => {
       try {
         const result = await app.commands?.execute("process.inventory");
@@ -34,9 +36,10 @@ export default {
         if (payload && Array.isArray(payload.owners)) { current = payload as Inventory; failure = ""; }
         else failure = "INVALID_DATA: owners array is missing";
       } catch (error) { failure = String(error); }
+      repaint();
       return current;
     };
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
-    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { render(container, current, view.root, "loading process inventory"); void refresh().then((inventory) => render(container, inventory, view.root, failure)); }, unmount(container: HTMLElement) { container.replaceChildren(); } }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, view.root); render(container, current, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };
