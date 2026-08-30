@@ -118,7 +118,15 @@ export default {
       handler: async (params) => {
         if (!initialized) await refresh();
         if (failure) throw new Error(failure);
-        return waiter.wait(current, params);
+        try {
+          return await waiter.wait(current, params);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message.startsWith("PROCESS_WAIT_TIMEOUT:")) {
+            return { ok: false, code: "TIMEOUT", message };
+          }
+          throw error;
+        }
       },
     }) ?? { dispose() {} });
     if (app.events) ctx.subscriptions.push(app.events.on("process.inventory.changed", (event) => {
