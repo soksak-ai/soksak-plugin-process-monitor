@@ -12,7 +12,8 @@ is operator recovery, and the read-only `status` command exposes the current red
 initialization state and failure. The `wait` command observes that same event-reduced state and
 completes when one owner advances beyond a caller-supplied revision and, when requested, reaches an
 exact process count. It does not poll; its timer is only a bounded failure deadline when no matching
-event arrives. A record with no optional `cwd` is counted as
+event arrives, and that deadline returns the machine-readable `TIMEOUT` code rather than an internal
+exception. A record with no optional `cwd` is counted as
 `PROCESS_CWD_UNAVAILABLE` and is not attributed to a project.
 
 The plugin has no runtime dependency on another plugin. Core's sidebar section API places it beside

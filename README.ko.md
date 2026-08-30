@@ -8,7 +8,8 @@ gap은 polling으로 복구하지 않고 `PROCESS_REVISION_GAP`으로 표시합�
 recovery이며 read-only `status` command는 reduced snapshot, initialization, failure를 공개합니다.
 `wait` command는 같은 event-reduced state를 구독하고 지정 owner가 기준 revision을 초과하면서,
 요청한 경우 정확한 process count에 도달하면 완료됩니다. Polling하지 않으며 timer는 대응 event가
-오지 않을 때 무한 대기를 막는 실패 기한으로만 사용합니다.
+오지 않을 때 무한 대기를 막는 실패 기한으로만 사용하고, 이 기한은 internal exception이 아니라
+기계 판독 가능한 `TIMEOUT` code를 반환합니다.
 Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하고 project에 귀속하지 않습니다.
 
 선택한 environment에 등록된 owner가 공개하고 현재 project root와 같거나 그 하위인 `cwd`의 record만
