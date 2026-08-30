@@ -78,6 +78,10 @@ export default {
       return current;
     };
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.commands?.register("status", {
+      description: "Read the current event-reduced process inventory",
+      handler: () => ({ initialized, failure, inventory: current }),
+    }) ?? { dispose() {} });
     if (app.events) ctx.subscriptions.push(app.events.on("process.inventory.changed", (event) => {
       if (!initialized) return;
       try { current = applyProcessEvent(current, event); failure = ""; }
