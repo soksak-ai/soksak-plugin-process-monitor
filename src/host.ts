@@ -7,8 +7,19 @@ export interface OwnerInventory { owner: string; revision: number; processes: Pr
 export interface Inventory { owners: OwnerInventory[] }
 export interface ProcessEvent { revision: number; kind: "started" | "updated" | "ended"; process: ProcessRecord }
 export interface ViewContext { projectId: string; root: string | null; paneId: string | null; setBadge(badge: number | "dot" | null): void }
+export interface CommandParamSpec {
+  type: "string" | "number" | "boolean" | "string[]" | "number[]" | "json";
+  description: string | { en: string; ko: string };
+  required?: boolean;
+}
+export interface CommandRegistrationSpec {
+  handler: (params: Record<string, unknown>) => Promise<object> | object;
+  description: string | { en: string; ko: string };
+  params?: Record<string, CommandParamSpec>;
+  returns?: string;
+}
 export interface Api {
-  commands?: { register(name: string, spec: { handler: (params: Record<string, unknown>) => Promise<object> | object; description: string }): Disposable; execute(name: string, params?: Record<string, unknown>): Promise<Record<string, unknown>> };
+  commands?: { register(name: string, spec: CommandRegistrationSpec): Disposable; execute(name: string, params?: Record<string, unknown>): Promise<Record<string, unknown>> };
   ui?: { registerView(id: string, provider: { mount(container: HTMLElement, ctx: ViewContext): void; unmount?(container: HTMLElement): void }): Disposable };
   events?: { on(event: "process.inventory.changed", listener: (event: ProcessEvent) => void): Disposable };
 }

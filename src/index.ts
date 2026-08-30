@@ -90,7 +90,31 @@ export default {
       handler: () => ({ initialized, failure, inventory: current }),
     }) ?? { dispose() {} });
     ctx.subscriptions.push(app.commands?.register("wait", {
-      description: "Wait for an event-reduced process inventory condition",
+      description: {
+        en: "Wait for an event-reduced process inventory condition",
+        ko: "이벤트로 축약된 프로세스 inventory 조건을 기다립니다.",
+      },
+      params: {
+        owner: {
+          type: "string",
+          description: { en: "Process inventory owner", ko: "프로세스 inventory owner" },
+          required: true,
+        },
+        afterRevision: {
+          type: "number",
+          description: { en: "Require a revision greater than this value", ko: "이 값보다 큰 revision을 기다립니다." },
+          required: true,
+        },
+        processCount: {
+          type: "number",
+          description: { en: "Optional exact process count", ko: "선택적인 정확한 프로세스 수" },
+        },
+        timeoutMs: {
+          type: "number",
+          description: { en: "Failure deadline in milliseconds", ko: "실패 기한(밀리초)" },
+        },
+      },
+      returns: "{ owner, revision, processCount }",
       handler: async (params) => {
         if (!initialized) await refresh();
         if (failure) throw new Error(failure);
