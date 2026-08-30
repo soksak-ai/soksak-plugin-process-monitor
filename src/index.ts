@@ -4,7 +4,13 @@ const node = (document: Document, tag: string, text = "") => { const element = d
 export function selectProjectProcesses(inventory: Inventory, rootPath: string | null): ProcessRecord[] {
   if (!rootPath) return [];
   const inProject = (cwd: string) => cwd === rootPath || cwd.startsWith(`${rootPath}/`);
-  return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => inProject(process.cwd)));
+  return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : [])
+    .filter((process) => typeof process.cwd === "string" && process.cwd !== "" && inProject(process.cwd)));
+}
+export function countProcessesWithoutCwd(inventory: Inventory): number {
+  return inventory.owners.reduce((count, owner) => count + (Array.isArray(owner.processes)
+    ? owner.processes.filter((process) => typeof process.cwd !== "string" || process.cwd === "").length
+    : 0), 0);
 }
 function render(container: HTMLElement, inventory: Inventory, rootPath: string | null, error = ""): void {
   container.replaceChildren();
@@ -13,6 +19,8 @@ function render(container: HTMLElement, inventory: Inventory, rootPath: string |
   const list = node(container.ownerDocument, "div"); list.dataset.node = "list";
   Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit" });
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
+  const missingCwd = countProcessesWithoutCwd(inventory);
+  if (missingCwd > 0) { const warning = node(container.ownerDocument, "p", `PROCESS_CWD_UNAVAILABLE: ${missingCwd}`); warning.dataset.node = "process-cwd-unavailable"; list.append(warning); }
   const selected = new Set(selectProjectProcesses(inventory, rootPath).map((process) => process.id));
   const owners = inventory.owners.map((owner) => ({ ...owner, processes: (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => selected.has(process.id)) })).filter((owner) => owner.processes.length > 0);
   if (!rootPath) { const missing = node(container.ownerDocument, "p", "PROJECT_ROOT_UNAVAILABLE"); missing.dataset.node = "project-root-error"; list.append(missing); }

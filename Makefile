@@ -1,6 +1,6 @@
 SHELL := /bin/sh
 .PHONY: preflight prepare build verify require-tooling require-out release attest
-SDK_VERSION := 0.0.15
+SDK_VERSION := 0.0.18
 
 preflight:
 	@scripts/check-build-environment.sh

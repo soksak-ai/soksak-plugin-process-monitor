@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { selectProjectProcesses } from "./index.js";
+import { countProcessesWithoutCwd, selectProjectProcesses } from "./index.js";
 
 const process = (id: string, cwd: string) => ({ id, owner: "owner", pid: 1, parentPid: 0, command: id, state: "running" as const, startedAtUnixMs: 1, cwd });
 
@@ -13,5 +13,11 @@ describe("project process selection", () => {
   });
   it("treats a null process list as an empty owner snapshot", () => {
     expect(selectProjectProcesses({ owners: [{ owner: "owner", revision: 1, processes: null as never }] }, "/work")).toEqual([]);
+  });
+  it("does not crash when an owner legitimately omits an unavailable cwd", () => {
+    const withoutCwd = { id: "shell", owner: "owner", pid: 1, parentPid: 0, command: "zsh", state: "running" as const, startedAtUnixMs: 1 };
+    const inventory = { owners: [{ owner: "owner", revision: 1, processes: [withoutCwd] }] };
+    expect(selectProjectProcesses(inventory, "/work")).toEqual([]);
+    expect(countProcessesWithoutCwd(inventory)).toBe(1);
   });
 });

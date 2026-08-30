@@ -1,7 +1,7 @@
 export interface Disposable { dispose(): void }
 export interface ProcessRecord {
   id: string; owner: string; window?: string; pane?: string; pid: number; parentPid: number;
-  command: string; state: "running" | "ended"; startedAtUnixMs: number; endedAtUnixMs?: number; cwd: string;
+  command: string; state: "running" | "ended"; startedAtUnixMs: number; endedAtUnixMs?: number; cwd?: string;
 }
 export interface OwnerInventory { owner: string; revision: number; processes: ProcessRecord[] }
 export interface Inventory { owners: OwnerInventory[] }
