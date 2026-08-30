@@ -6,7 +6,7 @@ const makefile = readFileSync("Makefile", "utf8");
 assert.equal(manifest.version, pkg.version);
 assert.equal(manifest.contributes.views[0].surfaces[0], "side");
 assert.equal(manifest.contributes.views[0].id, "process-monitor");
-assert.deepEqual(manifest.contributes.commands.map((command) => command.name), ["refresh", "status"]);
+assert.deepEqual(manifest.contributes.commands.map((command) => command.name), ["refresh", "status", "wait"]);
 assert.deepEqual(JSON.parse(readFileSync("release-files.json", "utf8")), ["LICENSE", "main.js", "plugin.json"]);
 for (const target of ["preflight", "prepare", "build", "verify", "release", "attest", "require-tooling", "require-out"]) assert.match(makefile, new RegExp(`^${target}:`, "m"));
 assert.match(makefile, /SDK_VERSION := 0\.0\.18/);

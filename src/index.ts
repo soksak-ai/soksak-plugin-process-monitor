@@ -1,4 +1,5 @@
 import type { Context, Inventory, ProcessEvent, ProcessRecord, ViewContext } from "./host.js";
+import { InventoryEventWaiter } from "./wait.js";
 
 export function applyProcessEvent(inventory: Inventory, event: ProcessEvent): Inventory {
   const ownerName = event.process.owner;
@@ -64,6 +65,7 @@ export default {
     let current: Inventory = { owners: [] };
     let failure = "";
     let initialized = false;
+    const waiter = new InventoryEventWaiter();
     const mounted = new Map<HTMLElement, string | null>();
     const repaint = () => mounted.forEach((rootPath, container) => render(container, current, rootPath, failure));
     const refresh = async () => {
@@ -71,7 +73,12 @@ export default {
         const result = await app.commands?.execute("process.inventory");
         if (!result || result.ok !== true) { failure = `${result?.code ?? "NO_RESULT"}: ${result?.message ?? "command returned no data"}`; return current; }
         const payload = result.data as { owners?: unknown } | undefined;
-        if (payload && Array.isArray(payload.owners)) { current = payload as Inventory; failure = ""; initialized = true; }
+        if (payload && Array.isArray(payload.owners)) {
+          current = payload as Inventory;
+          failure = "";
+          initialized = true;
+          waiter.update(current);
+        }
         else failure = "INVALID_DATA: owners array is missing";
       } catch (error) { failure = String(error); }
       repaint();
@@ -82,12 +89,27 @@ export default {
       description: "Read the current event-reduced process inventory",
       handler: () => ({ initialized, failure, inventory: current }),
     }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.commands?.register("wait", {
+      description: "Wait for an event-reduced process inventory condition",
+      handler: async (params) => {
+        if (!initialized) await refresh();
+        if (failure) throw new Error(failure);
+        return waiter.wait(current, params);
+      },
+    }) ?? { dispose() {} });
     if (app.events) ctx.subscriptions.push(app.events.on("process.inventory.changed", (event) => {
       if (!initialized) return;
-      try { current = applyProcessEvent(current, event); failure = ""; }
-      catch (error) { failure = String(error); }
+      try {
+        current = applyProcessEvent(current, event);
+        failure = "";
+        waiter.update(current);
+      } catch (error) {
+        failure = String(error);
+        waiter.fail(error);
+      }
       repaint();
     }));
+    ctx.subscriptions.push({ dispose: () => waiter.dispose() });
     ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, view.root); render(container, current, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };

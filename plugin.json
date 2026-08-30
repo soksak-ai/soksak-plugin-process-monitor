@@ -22,6 +22,9 @@
     }, {
       "name": "status",
       "title": { "en": "Process inventory status", "ko": "프로세스 inventory 상태" }
+    }, {
+      "name": "wait",
+      "title": { "en": "Wait for process inventory", "ko": "프로세스 inventory 대기" }
     }],
     "nodes": [
       { "id": "root", "description": { "en": "Process monitor root", "ko": "프로세스 모니터 루트" } },
