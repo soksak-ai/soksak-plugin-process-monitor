@@ -9,7 +9,10 @@ renders the revisioned owner snapshot obtained at mount. It then applies the pub
 `process.inventory.changed` stream once per monotonic revision; stale events are ignored and a gap
 is exposed as `PROCESS_REVISION_GAP` instead of repaired by polling. The explicit `refresh` command
 is operator recovery, and the read-only `status` command exposes the current reduced snapshot,
-initialization state and failure. A record with no optional `cwd` is counted as
+initialization state and failure. The `wait` command observes that same event-reduced state and
+completes when one owner advances beyond a caller-supplied revision and, when requested, reaches an
+exact process count. It does not poll; its timer is only a bounded failure deadline when no matching
+event arrives. A record with no optional `cwd` is counted as
 `PROCESS_CWD_UNAVAILABLE` and is not attributed to a project.
 
 The plugin has no runtime dependency on another plugin. Core's sidebar section API places it beside
