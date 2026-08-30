@@ -1,4 +1,28 @@
-import type { Context, Inventory, ProcessRecord, ViewContext } from "./host.js";
+import type { Context, Inventory, ProcessEvent, ProcessRecord, ViewContext } from "./host.js";
+
+export function applyProcessEvent(inventory: Inventory, event: ProcessEvent): Inventory {
+  const ownerName = event.process.owner;
+  if (!ownerName || !Number.isSafeInteger(event.revision) || event.revision < 1) {
+    throw new Error("PROCESS_EVENT_INVALID");
+  }
+  const ownerIndex = inventory.owners.findIndex((owner) => owner.owner === ownerName);
+  const current = ownerIndex < 0
+    ? { owner: ownerName, revision: 0, processes: [] as ProcessRecord[] }
+    : inventory.owners[ownerIndex];
+  if (event.revision <= current.revision) return inventory;
+  if (event.revision !== current.revision + 1) {
+    throw new Error(`PROCESS_REVISION_GAP: ${ownerName} ${current.revision}->${event.revision}`);
+  }
+  let processes = current.processes.filter((process) => process.id !== event.process.id);
+  if (event.kind === "started" || event.kind === "updated") processes = [...processes, event.process];
+  else if (event.kind !== "ended") throw new Error(`PROCESS_EVENT_KIND_INVALID: ${event.kind}`);
+  const nextOwner = { ...current, revision: event.revision, processes };
+  const owners = [...inventory.owners];
+  if (ownerIndex < 0) owners.push(nextOwner);
+  else owners[ownerIndex] = nextOwner;
+  owners.sort((left, right) => left.owner.localeCompare(right.owner));
+  return { owners };
+}
 
 const node = (document: Document, tag: string, text = "") => { const element = document.createElement(tag); element.textContent = text; return element; };
 export function selectProjectProcesses(inventory: Inventory, rootPath: string | null): ProcessRecord[] {
@@ -39,6 +63,7 @@ export default {
     const app = ctx.app;
     let current: Inventory = { owners: [] };
     let failure = "";
+    let initialized = false;
     const mounted = new Map<HTMLElement, string | null>();
     const repaint = () => mounted.forEach((rootPath, container) => render(container, current, rootPath, failure));
     const refresh = async () => {
@@ -46,13 +71,19 @@ export default {
         const result = await app.commands?.execute("process.inventory");
         if (!result || result.ok !== true) { failure = `${result?.code ?? "NO_RESULT"}: ${result?.message ?? "command returned no data"}`; return current; }
         const payload = result.data as { owners?: unknown } | undefined;
-        if (payload && Array.isArray(payload.owners)) { current = payload as Inventory; failure = ""; }
+        if (payload && Array.isArray(payload.owners)) { current = payload as Inventory; failure = ""; initialized = true; }
         else failure = "INVALID_DATA: owners array is missing";
       } catch (error) { failure = String(error); }
       repaint();
       return current;
     };
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
+    if (app.events) ctx.subscriptions.push(app.events.on("process.inventory.changed", (event) => {
+      if (!initialized) return;
+      try { current = applyProcessEvent(current, event); failure = ""; }
+      catch (error) { failure = String(error); }
+      repaint();
+    }));
     ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, view.root); render(container, current, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countProcessesWithoutCwd, selectProjectProcesses } from "./index.js";
+import { applyProcessEvent, countProcessesWithoutCwd, selectProjectProcesses } from "./index.js";
 
 const process = (id: string, cwd: string) => ({ id, owner: "owner", pid: 1, parentPid: 0, command: id, state: "running" as const, startedAtUnixMs: 1, cwd });
 
@@ -19,5 +19,22 @@ describe("project process selection", () => {
     const inventory = { owners: [{ owner: "owner", revision: 1, processes: [withoutCwd] }] };
     expect(selectProjectProcesses(inventory, "/work")).toEqual([]);
     expect(countProcessesWithoutCwd(inventory)).toBe(1);
+  });
+});
+
+describe("process event reduction", () => {
+  const eventProcess = process("shell", "/work");
+  it("applies one next revision and ignores a stale replay", () => {
+    const initial = { owners: [{ owner: "owner", revision: 1, processes: [] }] };
+    const started = applyProcessEvent(initial, { revision: 2, kind: "started", process: eventProcess });
+    expect(started.owners[0]).toMatchObject({ revision: 2, processes: [eventProcess] });
+    expect(applyProcessEvent(started, { revision: 2, kind: "started", process: eventProcess })).toBe(started);
+  });
+  it("removes an ended process and refuses a revision gap", () => {
+    const initial = { owners: [{ owner: "owner", revision: 2, processes: [eventProcess] }] };
+    expect(applyProcessEvent(initial, { revision: 3, kind: "ended", process: { ...eventProcess, state: "ended" } }).owners[0])
+      .toMatchObject({ revision: 3, processes: [] });
+    expect(() => applyProcessEvent(initial, { revision: 4, kind: "updated", process: eventProcess }))
+      .toThrow(/PROCESS_REVISION_GAP/);
   });
 });

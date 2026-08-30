@@ -5,9 +5,11 @@ export interface ProcessRecord {
 }
 export interface OwnerInventory { owner: string; revision: number; processes: ProcessRecord[] }
 export interface Inventory { owners: OwnerInventory[] }
+export interface ProcessEvent { revision: number; kind: "started" | "updated" | "ended"; process: ProcessRecord }
 export interface ViewContext { projectId: string; root: string | null; paneId: string | null; setBadge(badge: number | "dot" | null): void }
 export interface Api {
   commands?: { register(name: string, spec: { handler: (params: Record<string, unknown>) => Promise<object> | object; description: string }): Disposable; execute(name: string, params?: Record<string, unknown>): Promise<Record<string, unknown>> };
   ui?: { registerView(id: string, provider: { mount(container: HTMLElement, ctx: ViewContext): void; unmount?(container: HTMLElement): void }): Disposable };
+  events?: { on(event: "process.inventory.changed", listener: (event: ProcessEvent) => void): Disposable };
 }
 export interface Context { app: Api; subscriptions: Disposable[] }
