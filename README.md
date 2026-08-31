@@ -21,6 +21,21 @@ exception. A record with no optional `cwd` is counted as
 The plugin has no runtime dependency on another plugin. Core's sidebar section API places it beside
 the work, and the process contract supplies its data.
 
+## Verification
+
+Use the public commands below against a running host. `sections.left` places the section in the fixed
+sidebar; `plugin.soksak-plugin-process-monitor.status` returns the machine-readable inventory.
+
+```sh
+sok sections.left '{"set":"<process-monitor-section-set>"}'
+sok workspace.region.toggle '{"region":"left","open":true}'
+sok plugin.soksak-plugin-process-monitor.status '{}'
+```
+
+The result is GREEN only when each selected process has `pid`, `parentPid`, `cwd`, `pane`, `project`,
+and `state`, and the event revision increases without a gap. A screenshot is required for the visual
+check; the status response and the screenshot are separate evidence.
+
 ## Build
 
 ```sh

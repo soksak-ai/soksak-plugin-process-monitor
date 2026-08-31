@@ -21,6 +21,21 @@ Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하
 다른 플러그인과 runtime dependency를 맺지 않습니다. Core sidebar section API가 작업 화면 옆에
 배치하고 process contract가 데이터를 제공합니다.
 
+## 검증
+
+실행 중인 host에서 공개 command를 사용합니다. `sections.left`는 section을 고정 sidebar에 배치하고,
+`plugin.soksak-plugin-process-monitor.status`는 기계 판독 가능한 inventory를 반환합니다.
+
+```sh
+sok sections.left '{"set":"<process-monitor-section-set>"}'
+sok workspace.region.toggle '{"region":"left","open":true}'
+sok plugin.soksak-plugin-process-monitor.status '{}'
+```
+
+선택된 각 process에 `pid`, `parentPid`, `cwd`, `pane`, `project`, `state`가 있고 event revision이
+누락 없이 증가할 때만 GREEN입니다. 화면 검증에는 캡처가 필요하며 status 응답과 캡처는 별도 증거로
+관리합니다.
+
 ## 빌드
 
 ```sh
