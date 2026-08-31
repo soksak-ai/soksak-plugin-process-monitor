@@ -1,5 +1,5 @@
 SHELL := /bin/sh
-.PHONY: preflight prepare build verify require-tooling require-out require-store release attest
+.PHONY: preflight prepare build verify require-tooling require-out require-store release attest publish-local
 SDK_VERSION := 0.0.20
 
 preflight:
@@ -45,3 +45,7 @@ attest: require-tooling require-out release
 		--tooling-release "$$tooling_root/release.json" --mode native \
 		--platform "$$(node -p 'process.platform')" --architecture "$$(node -p 'process.arch')" \
 		--tool "node=$$(node -p 'process.versions.node')" --tool "pnpm=$$(pnpm --version)"
+
+publish-local: attest
+	@command -v soksak-local-release >/dev/null || { echo 'soksak-local-release is not selected by PATH' >&2; exit 78; }
+	@soksak-local-release publish --store "$(STORE)" --release "$(OUT)"

@@ -25,5 +25,5 @@ Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하
 
 ```sh
 make verify
-make attest STORE=/absolute/local-release-store OUT=/absolute/release-output
+make publish-local STORE=/absolute/local-release-store OUT=/absolute/release-output
 ```

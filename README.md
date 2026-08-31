@@ -25,5 +25,5 @@ the work, and the process contract supplies its data.
 
 ```sh
 make verify
-make attest STORE=/absolute/local-release-store OUT=/absolute/release-output
+make publish-local STORE=/absolute/local-release-store OUT=/absolute/release-output
 ```
