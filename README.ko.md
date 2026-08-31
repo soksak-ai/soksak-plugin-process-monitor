@@ -6,6 +6,8 @@ workstation을 스캔하거나 terminal plugin의 DOM을 읽거나 실행 파일
 `process.inventory.changed` stream을 monotonic revision마다 한 번 적용합니다. Stale event는 무시하고
 gap은 polling으로 복구하지 않고 `PROCESS_REVISION_GAP`으로 표시합니다. 명시적 `refresh`는 operator
 recovery이며 read-only `status` command는 reduced snapshot, initialization, failure를 공개합니다.
+mount된 project마다 `status.projects`는 선택된 process record에 project id와 root를 추가합니다. UI와
+status는 같은 projection에서 PID, PPID, cwd, pane, project, lifecycle을 공개합니다.
 `wait` command는 같은 event-reduced state를 구독하고 지정 owner가 기준 revision을 초과하면서,
 요청한 경우 정확한 process count에 도달하면 완료됩니다. Polling하지 않으며 timer는 대응 event가
 오지 않을 때 무한 대기를 막는 실패 기한으로만 사용하고, 이 기한은 internal exception이 아니라

@@ -1,4 +1,11 @@
-import type { Context, Inventory, ProcessEvent, ProcessRecord, ViewContext } from "./host.js";
+import type {
+  Context,
+  Inventory,
+  ProcessEvent,
+  ProcessRecord,
+  ProjectProcessRecord,
+  ViewContext,
+} from "./host.js";
 import { InventoryEventWaiter } from "./wait.js";
 
 export function applyProcessEvent(inventory: Inventory, event: ProcessEvent): Inventory {
@@ -32,12 +39,49 @@ export function selectProjectProcesses(inventory: Inventory, rootPath: string | 
   return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : [])
     .filter((process) => typeof process.cwd === "string" && process.cwd !== "" && inProject(process.cwd)));
 }
+export function selectProjectProcessRecords(
+  inventory: Inventory,
+  project: string,
+  rootPath: string | null,
+): ProjectProcessRecord[] {
+  if (!rootPath) return [];
+  return selectProjectProcesses(inventory, rootPath).map((process) => ({
+    ...process,
+    project,
+    projectRoot: rootPath,
+  }));
+}
+export function processMonitorStatus(
+  initialized: boolean,
+  failure: string,
+  inventory: Inventory,
+  views: Iterable<Pick<ViewContext, "projectId" | "root">>,
+) {
+  const unique = new Map<string, Pick<ViewContext, "projectId" | "root">>();
+  for (const view of views) unique.set(`${view.projectId}\u0000${view.root ?? ""}`, view);
+  return {
+    initialized,
+    failure,
+    inventory,
+    projects: [...unique.values()].map((view) => ({
+      project: view.projectId,
+      root: view.root,
+      processes: selectProjectProcessRecords(inventory, view.projectId, view.root),
+    })),
+  };
+}
 export function countProcessesWithoutCwd(inventory: Inventory): number {
   return inventory.owners.reduce((count, owner) => count + (Array.isArray(owner.processes)
     ? owner.processes.filter((process) => typeof process.cwd !== "string" || process.cwd === "").length
     : 0), 0);
 }
-function render(container: HTMLElement, inventory: Inventory, rootPath: string | null, error = ""): void {
+function render(
+  container: HTMLElement,
+  inventory: Inventory,
+  project: string,
+  rootPath: string | null,
+  error = "",
+): void {
   container.replaceChildren();
   const root = node(container.ownerDocument, "section"); root.dataset.node = "root";
   Object.assign(root.style, { color: "var(--fg)", background: "var(--card)", padding: "12px", minHeight: "100%", boxSizing: "border-box", fontFamily: "inherit" });
@@ -46,14 +90,21 @@ function render(container: HTMLElement, inventory: Inventory, rootPath: string |
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
   const missingCwd = countProcessesWithoutCwd(inventory);
   if (missingCwd > 0) { const warning = node(container.ownerDocument, "p", `PROCESS_CWD_UNAVAILABLE: ${missingCwd}`); warning.dataset.node = "process-cwd-unavailable"; list.append(warning); }
-  const selected = new Set(selectProjectProcesses(inventory, rootPath).map((process) => process.id));
-  const owners = inventory.owners.map((owner) => ({ ...owner, processes: (Array.isArray(owner.processes) ? owner.processes : []).filter((process) => selected.has(process.id)) })).filter((owner) => owner.processes.length > 0);
+  const selected = selectProjectProcessRecords(inventory, project, rootPath);
+  const owners = inventory.owners.map((owner) => ({
+    ...owner,
+    processes: selected.filter((process) => process.owner === owner.owner),
+  })).filter((owner) => owner.processes.length > 0);
   if (!rootPath) { const missing = node(container.ownerDocument, "p", "PROJECT_ROOT_UNAVAILABLE"); missing.dataset.node = "project-root-error"; list.append(missing); }
   else if (owners.length === 0) { const empty = node(container.ownerDocument, "p", "No owned processes in this project"); empty.dataset.node = "empty"; list.append(empty); }
   for (const owner of owners) {
     const heading = node(container.ownerDocument, "h3", owner.owner); list.append(heading);
     for (const process of owner.processes) {
-      const row = node(container.ownerDocument, "div", `${process.command} · pid ${process.pid} · ${process.cwd} · ${process.state}`);
+      const row = node(
+        container.ownerDocument,
+        "div",
+        `${process.command} · pid ${process.pid} · ppid ${process.parentPid} · pane ${process.pane ?? "-"} · project ${process.project} · cwd ${process.cwd} · lifecycle ${process.state}`,
+      );
       row.dataset.processId = process.id; list.append(row);
     }
   }
@@ -66,8 +117,10 @@ export default {
     let failure = "";
     let initialized = false;
     const waiter = new InventoryEventWaiter();
-    const mounted = new Map<HTMLElement, string | null>();
-    const repaint = () => mounted.forEach((rootPath, container) => render(container, current, rootPath, failure));
+    const mounted = new Map<HTMLElement, Pick<ViewContext, "projectId" | "root">>();
+    const repaint = () => mounted.forEach((view, container) => {
+      render(container, current, view.projectId, view.root, failure);
+    });
     const refresh = async () => {
       try {
         const result = await app.commands?.execute("process.inventory");
@@ -87,7 +140,7 @@ export default {
     ctx.subscriptions.push(app.commands?.register("refresh", { description: "Refresh process inventory", handler: async () => { await refresh(); return { owners: current.owners.length }; } }) ?? { dispose() {} });
     ctx.subscriptions.push(app.commands?.register("status", {
       description: "Read the current event-reduced process inventory",
-      handler: () => ({ initialized, failure, inventory: current }),
+      handler: () => processMonitorStatus(initialized, failure, current, mounted.values()),
     }) ?? { dispose() {} });
     ctx.subscriptions.push(app.commands?.register("wait", {
       description: {
@@ -142,6 +195,6 @@ export default {
       repaint();
     }));
     ctx.subscriptions.push({ dispose: () => waiter.dispose() });
-    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, view.root); render(container, current, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, { projectId: view.projectId, root: view.root }); render(container, current, view.projectId, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };

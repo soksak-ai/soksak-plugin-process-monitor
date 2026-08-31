@@ -9,7 +9,9 @@ renders the revisioned owner snapshot obtained at mount. It then applies the pub
 `process.inventory.changed` stream once per monotonic revision; stale events are ignored and a gap
 is exposed as `PROCESS_REVISION_GAP` instead of repaired by polling. The explicit `refresh` command
 is operator recovery, and the read-only `status` command exposes the current reduced snapshot,
-initialization state and failure. The `wait` command observes that same event-reduced state and
+initialization state and failure. For each mounted project, `status.projects` adds the project id and
+root to its selected process records. The UI and status expose PID, PPID, cwd, pane, project, and
+lifecycle from that same projection. The `wait` command observes that same event-reduced state and
 completes when one owner advances beyond a caller-supplied revision and, when requested, reaches an
 exact process count. It does not poll; its timer is only a bounded failure deadline when no matching
 event arrives, and that deadline returns the machine-readable `TIMEOUT` code rather than an internal
