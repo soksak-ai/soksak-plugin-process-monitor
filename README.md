@@ -21,6 +21,11 @@ exception. A record with no optional `cwd` is counted as
 The plugin has no runtime dependency on another plugin. Core's sidebar section API places it beside
 the work, and the process contract supplies its data.
 
+`parentPid` is an observed operating-system relationship, not an ownership decision. A daemon may
+continue after Core exits and then legitimately have parent PID 1. Ownership is determined from the
+registered owner, project root, identity home and lifecycle state exposed by the process contract.
+The monitor must not label a record orphaned from `parentPid` alone.
+
 ## Verification
 
 Use the public commands below against a running host. `sections.left` places the section in the fixed

@@ -21,6 +21,11 @@ Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하
 다른 플러그인과 runtime dependency를 맺지 않습니다. Core sidebar section API가 작업 화면 옆에
 배치하고 process contract가 데이터를 제공합니다.
 
+`parentPid`는 운영체제가 제공한 부모 관계이며 소유권 판정 기준이 아닙니다. Core 종료 후에도
+daemon이 계속 실행되면 parent PID가 1일 수 있습니다. 소유권은 process contract가 공개한 등록
+owner, project root, identity home, lifecycle 상태로 판정합니다. `parentPid`만으로 record를
+고아 상태로 표시하지 않습니다.
+
 ## 검증
 
 실행 중인 host에서 공개 command를 사용합니다. `sections.left`는 section을 고정 sidebar에 배치하고,
