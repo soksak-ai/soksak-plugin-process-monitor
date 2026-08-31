@@ -35,7 +35,7 @@ export function applyProcessEvent(inventory: Inventory, event: ProcessEvent): In
 const node = (document: Document, tag: string, text = "") => { const element = document.createElement(tag); element.textContent = text; return element; };
 export function selectProjectProcesses(inventory: Inventory, rootPath: string | null): ProcessRecord[] {
   if (!rootPath) return [];
-  const root = rootPath.replace(/[\\/]+$/, "") || "/";
+  const root = normalizeProjectRoot(rootPath);
   const inProject = (cwd: string) => cwd === root || cwd.startsWith(`${root}/`);
   return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : [])
     .filter((process) => typeof process.cwd === "string" && process.cwd !== "" && inProject(process.cwd)));
@@ -46,13 +46,14 @@ export function selectProjectProcessRecords(
   rootPath: string | null,
 ): ProjectProcessRecord[] {
   if (!rootPath) return [];
-  const projectRoot = rootPath.replace(/[\\/]+$/, "") || "/";
+  const projectRoot = normalizeProjectRoot(rootPath);
   return selectProjectProcesses(inventory, rootPath).map((process) => ({
     ...process,
     project,
     projectRoot,
   }));
 }
+const normalizeProjectRoot = (rootPath: string): string => rootPath.replace(/[\\/]+$/, "") || "/";
 export function processMonitorStatus(
   initialized: boolean,
   failure: string,
@@ -60,14 +61,17 @@ export function processMonitorStatus(
   views: Iterable<Pick<ViewContext, "projectId" | "root">>,
 ) {
   const unique = new Map<string, Pick<ViewContext, "projectId" | "root">>();
-  for (const view of views) unique.set(`${view.projectId}\u0000${view.root ?? ""}`, view);
+  for (const view of views) {
+    const root = view.root === null ? null : normalizeProjectRoot(view.root);
+    unique.set(`${view.projectId}\u0000${root ?? ""}`, root === view.root ? view : { ...view, root });
+  }
   return {
     initialized,
     failure,
     inventory,
     projects: [...unique.values()].map((view) => ({
       project: view.projectId,
-      root: view.root,
+      root: view.root === null ? null : normalizeProjectRoot(view.root),
       processes: selectProjectProcessRecords(inventory, view.projectId, view.root),
     })),
   };

@@ -43,6 +43,12 @@ describe("project process selection", () => {
       state: "running",
     });
   });
+  it("normalizes the project root in status output", () => {
+    const status = processMonitorStatus(
+      true, "", { owners: [] }, [{ projectId: "project-a", root: "/work/" }],
+    );
+    expect(status.projects[0]?.root).toBe("/work");
+  });
   it("returns no process when the project root is unavailable", () => {
     expect(selectProjectProcesses({ owners: [{ owner: "owner", revision: 1, processes: [process("one", "/work")] }] }, null)).toEqual([]);
   });
