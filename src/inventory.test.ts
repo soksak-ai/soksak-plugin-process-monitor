@@ -14,6 +14,10 @@ describe("project process selection", () => {
     const inventory = { owners: [{ owner: "owner", revision: 1, processes: [process("root", "/work"), process("child", "/work/pkg"), process("sibling", "/workspace-other")] }] };
     expect(selectProjectProcesses(inventory, "/work").map((value) => value.id)).toEqual(["root", "child"]);
   });
+  it("normalizes a project root with a trailing separator", () => {
+    const inventory = { owners: [{ owner: "owner", revision: 1, processes: [process("child", "/work/pkg")] }] };
+    expect(selectProjectProcesses(inventory, "/work/").map((value) => value.id)).toEqual(["child"]);
+  });
   it("adds the selected project identity to every public project process record", () => {
     const inventory = { owners: [{ owner: "owner", revision: 1, processes: [process("root", "/work"), process("other", "/other")] }] };
     expect(selectProjectProcessRecords(inventory, "project-a", "/work")).toEqual([{

@@ -35,7 +35,8 @@ export function applyProcessEvent(inventory: Inventory, event: ProcessEvent): In
 const node = (document: Document, tag: string, text = "") => { const element = document.createElement(tag); element.textContent = text; return element; };
 export function selectProjectProcesses(inventory: Inventory, rootPath: string | null): ProcessRecord[] {
   if (!rootPath) return [];
-  const inProject = (cwd: string) => cwd === rootPath || cwd.startsWith(`${rootPath}/`);
+  const root = rootPath.replace(/[\\/]+$/, "") || "/";
+  const inProject = (cwd: string) => cwd === root || cwd.startsWith(`${root}/`);
   return inventory.owners.flatMap((owner) => (Array.isArray(owner.processes) ? owner.processes : [])
     .filter((process) => typeof process.cwd === "string" && process.cwd !== "" && inProject(process.cwd)));
 }
@@ -45,10 +46,11 @@ export function selectProjectProcessRecords(
   rootPath: string | null,
 ): ProjectProcessRecord[] {
   if (!rootPath) return [];
+  const projectRoot = rootPath.replace(/[\\/]+$/, "") || "/";
   return selectProjectProcesses(inventory, rootPath).map((process) => ({
     ...process,
     project,
-    projectRoot: rootPath,
+    projectRoot,
   }));
 }
 export function processMonitorStatus(
