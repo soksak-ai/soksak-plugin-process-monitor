@@ -26,6 +26,15 @@ describe("project process selection", () => {
       projectRoot: "/work",
     }]);
   });
+  it("keeps a daemon record with parent pid 1 when owner and project root are valid", () => {
+    const daemon = { ...process("daemon", "/work/runtime"), pid: 41, parentPid: 1 };
+    const inventory = { owners: [{ owner: "owner", revision: 1, processes: [daemon] }] };
+    expect(selectProjectProcessRecords(inventory, "project-a", "/work")).toEqual([{
+      ...daemon,
+      project: "project-a",
+      projectRoot: "/work",
+    }]);
+  });
   it("publishes PID, PPID, cwd, pane, project, and lifecycle through status", () => {
     const record = { ...process("root", "/work"), pane: "tab-a.1", pid: 41, parentPid: 7 };
     const status = processMonitorStatus(
