@@ -20,3 +20,10 @@ Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하
 
 다른 플러그인과 runtime dependency를 맺지 않습니다. Core sidebar section API가 작업 화면 옆에
 배치하고 process contract가 데이터를 제공합니다.
+
+## 빌드
+
+```sh
+make verify
+make attest STORE=/absolute/local-release-store OUT=/absolute/release-output
+```

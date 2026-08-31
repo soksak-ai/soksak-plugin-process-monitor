@@ -20,3 +20,10 @@ exception. A record with no optional `cwd` is counted as
 
 The plugin has no runtime dependency on another plugin. Core's sidebar section API places it beside
 the work, and the process contract supplies its data.
+
+## Build
+
+```sh
+make verify
+make attest STORE=/absolute/local-release-store OUT=/absolute/release-output
+```
