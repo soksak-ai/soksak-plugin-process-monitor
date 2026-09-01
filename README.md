@@ -24,7 +24,7 @@ the work, and the process contract supplies its data.
 `parentPid` is an observed operating-system relationship, not an ownership decision. A daemon may
 continue after Core exits and then legitimately have parent PID 1. Ownership is determined from the
 registered owner, project root, identity home and lifecycle state exposed by the process contract.
-The monitor must not label a record orphaned from `parentPid` alone.
+The monitor must not label a record unowned from `parentPid` alone.
 
 ## Verification
 

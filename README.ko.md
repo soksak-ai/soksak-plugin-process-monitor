@@ -23,8 +23,8 @@ Optional `cwd`가 없는 record는 `PROCESS_CWD_UNAVAILABLE` 수치에 포함하
 
 `parentPid`는 운영체제가 제공한 부모 관계이며 소유권 판정 기준이 아닙니다. Core 종료 후에도
 daemon이 계속 실행되면 parent PID가 1일 수 있습니다. 소유권은 process contract가 공개한 등록
-owner, project root, identity home, lifecycle 상태로 판정합니다. `parentPid`만으로 record를
-고아 상태로 표시하지 않습니다.
+owner, project root, identity home, lifecycle 상태로 판정합니다. `parentPid`만으로 record의
+소유자 없음을 판정하지 않습니다.
 
 ## 검증
 
