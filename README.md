@@ -7,7 +7,9 @@ environment and whose published `cwd` equals or is below the current project roo
 sidecar has to be open for a record to exist; a browser view creates no process record. The view
 renders the revisioned owner snapshot obtained at mount. It then applies the public
 `process.inventory.changed` stream once per monotonic revision; stale events are ignored and a gap
-is exposed as `PROCESS_REVISION_GAP` instead of repaired by polling. The explicit `refresh` command
+is exposed as `PROCESS_REVISION_GAP` instead of repaired by polling. Events received while the
+initial snapshot is in flight are buffered and reduced against that snapshot before initialization
+is published. The explicit `refresh` command
 is operator recovery, and the read-only `status` command exposes the current reduced snapshot,
 initialization state and failure. For each mounted project, `status.projects` adds the project id and
 root to its selected process records. The UI and status expose PID, PPID, cwd, pane, project, and

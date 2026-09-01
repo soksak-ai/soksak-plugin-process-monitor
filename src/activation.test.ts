@@ -61,4 +61,57 @@ describe("process monitor command surface", () => {
     await assertion;
     vi.useRealTimers();
   });
+
+  it("retains an event received while the initial inventory snapshot is in flight", async () => {
+    const commands = new Map<string, Record<string, unknown>>();
+    let onInventoryChanged: ((event: { revision: number; kind: "started"; process: {
+      id: string; owner: string; pid: number; parentPid: number; command: string;
+      state: "running"; startedAtUnixMs: number; cwd: string;
+    } }) => void) | undefined;
+    let resolveInventory: ((value: Record<string, unknown>) => void) | undefined;
+    processMonitor.activate({
+      app: {
+        commands: {
+          register(name, spec) {
+            commands.set(name, spec as unknown as Record<string, unknown>);
+            return { dispose() {} };
+          },
+          execute() {
+            return new Promise((resolve) => { resolveInventory = resolve; });
+          },
+        },
+        events: {
+          on(_name, listener) {
+            onInventoryChanged = listener as typeof onInventoryChanged;
+            return { dispose() {} };
+          },
+        },
+      },
+      subscriptions: [],
+    });
+
+    const refresh = commands.get("refresh")?.handler as () => Promise<object>;
+    const pending = refresh();
+    onInventoryChanged?.({
+      revision: 2,
+      kind: "started",
+      process: {
+        id: "shell-1", owner: "soksak-sidecar-pty", pid: 42, parentPid: 7,
+        command: "/bin/zsh -l", state: "running", startedAtUnixMs: 1, cwd: "/work",
+      },
+    });
+    resolveInventory?.({
+      ok: true,
+      data: { owners: [{ owner: "soksak-sidecar-pty", revision: 1, processes: [] }] },
+    });
+    await pending;
+
+    const status = await (commands.get("status")?.handler as () => Promise<object>)();
+    expect(status).toMatchObject({
+      initialized: true,
+      inventory: {
+        owners: [{ revision: 2, processes: [{ id: "shell-1", cwd: "/work" }] }],
+      },
+    });
+  });
 });

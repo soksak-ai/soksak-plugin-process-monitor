@@ -4,7 +4,9 @@
 workstation을 스캔하거나 terminal plugin의 DOM을 읽거나 실행 파일 이름으로 소유권을 추정하지
 않습니다. Mount 시점에는 `process.inventory`에서 revision owner snapshot을 얻고 이후에는 public
 `process.inventory.changed` stream을 monotonic revision마다 한 번 적용합니다. Stale event는 무시하고
-gap은 polling으로 복구하지 않고 `PROCESS_REVISION_GAP`으로 표시합니다. 명시적 `refresh`는 operator
+gap은 polling으로 복구하지 않고 `PROCESS_REVISION_GAP`으로 표시합니다. 초기 snapshot이 진행 중일
+때 수신한 event는 버퍼에 보관하고 snapshot에 같은 reducer로 적용한 뒤 initialization을 공개합니다.
+명시적 `refresh`는 operator
 recovery이며 read-only `status` command는 reduced snapshot, initialization, failure를 공개합니다.
 mount된 project마다 `status.projects`는 선택된 process record에 project id와 root를 추가합니다. UI와
 status는 같은 projection에서 PID, PPID, cwd, pane, project, lifecycle을 공개합니다.

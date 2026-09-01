@@ -124,6 +124,7 @@ export default {
     let current: Inventory = { owners: [] };
     let failure = "";
     let initialized = false;
+    const pendingEvents: ProcessEvent[] = [];
     const waiter = new InventoryEventWaiter();
     const mounted = new Map<HTMLElement, Pick<ViewContext, "projectId" | "root">>();
     const repaint = () => mounted.forEach((view, container) => {
@@ -138,6 +139,18 @@ export default {
           current = payload as Inventory;
           failure = "";
           initialized = true;
+          // The snapshot and the event stream are one ordered boundary. Events received while the
+          // first snapshot was in flight must not disappear between those two operations; stale
+          // replays are ignored by the same revision reducer used after initialization.
+          for (const event of pendingEvents.splice(0)) {
+            try {
+              current = applyProcessEvent(current, event);
+            } catch (error) {
+              failure = String(error);
+              waiter.fail(error);
+              break;
+            }
+          }
           waiter.update(current);
         }
         else failure = "INVALID_DATA: owners array is missing";
@@ -191,7 +204,10 @@ export default {
       },
     }) ?? { dispose() {} });
     if (app.events) ctx.subscriptions.push(app.events.on("process.inventory.changed", (event) => {
-      if (!initialized) return;
+      if (!initialized) {
+        pendingEvents.push(event);
+        return;
+      }
       try {
         current = applyProcessEvent(current, event);
         failure = "";
