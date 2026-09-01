@@ -90,9 +90,9 @@ function render(
 ): void {
   container.replaceChildren();
   const root = node(container.ownerDocument, "section"); root.dataset.node = "root";
-  Object.assign(root.style, { color: "var(--fg)", background: "var(--card)", padding: "12px", minHeight: "100%", boxSizing: "border-box", fontFamily: "inherit" });
+  Object.assign(root.style, { color: "var(--fg)", background: "var(--card)", padding: "12px", minHeight: "100%", minWidth: "0", boxSizing: "border-box", fontFamily: "inherit", overflow: "hidden" });
   const list = node(container.ownerDocument, "div"); list.dataset.node = "list";
-  Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit" });
+  Object.assign(list.style, { display: "grid", gap: "8px", color: "inherit", minWidth: "0" });
   if (error) { const failure = node(container.ownerDocument, "p", `PROCESS_INVENTORY_FAILED: ${error}`); failure.dataset.node = "process-monitor/error"; list.append(failure); }
   const missingCwd = countProcessesWithoutCwd(inventory);
   if (missingCwd > 0) { const warning = node(container.ownerDocument, "p", `PROCESS_CWD_UNAVAILABLE: ${missingCwd}`); warning.dataset.node = "process-cwd-unavailable"; list.append(warning); }
@@ -111,7 +111,9 @@ function render(
         "div",
         `${process.command} · pid ${process.pid} · ppid ${process.parentPid} · pane ${process.pane ?? "-"} · project ${process.project} · cwd ${process.cwd} · lifecycle ${process.state}`,
       );
-      row.dataset.processId = process.id; list.append(row);
+      row.dataset.processId = process.id;
+      Object.assign(row.style, { minWidth: "0", overflowWrap: "anywhere", wordBreak: "break-word" });
+      list.append(row);
     }
   }
   root.append(list); container.append(root);
