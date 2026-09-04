@@ -21,7 +21,14 @@ export interface CommandRegistrationSpec {
 }
 export interface Api {
   commands?: { register(name: string, spec: CommandRegistrationSpec): Disposable; execute(name: string, params?: Record<string, unknown>): Promise<Record<string, unknown>> };
-  ui?: { registerView(id: string, provider: { mount(container: HTMLElement, ctx: ViewContext): void; unmount?(container: HTMLElement): void }): Disposable };
+  ui?: {
+    registerView(id: string, provider: {
+      /** What the view needs to come back (core SESSION S1-5): this one reads the inventory again. */
+      restores: "none" | "view" | "session";
+      mount(container: HTMLElement, ctx: ViewContext): void;
+      unmount?(container: HTMLElement): void;
+    }): Disposable;
+  };
   events?: { on(event: "process.inventory.changed", listener: (event: ProcessEvent) => void): Disposable };
 }
 export interface Context { app: Api; subscriptions: Disposable[] }

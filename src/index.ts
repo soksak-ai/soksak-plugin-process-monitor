@@ -219,6 +219,6 @@ export default {
       repaint();
     }));
     ctx.subscriptions.push({ dispose: () => waiter.dispose() });
-    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { mount(container: HTMLElement, view: ViewContext) { mounted.set(container, { projectId: view.projectId, root: view.root }); render(container, current, view.projectId, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
+    ctx.subscriptions.push(app.ui?.registerView("process-monitor", { restores: "none", mount(container: HTMLElement, view: ViewContext) { mounted.set(container, { projectId: view.projectId, root: view.root }); render(container, current, view.projectId, view.root, "loading process inventory"); void refresh(); }, unmount(container: HTMLElement) { mounted.delete(container); container.replaceChildren(); } }) ?? { dispose() {} });
   },
 };
