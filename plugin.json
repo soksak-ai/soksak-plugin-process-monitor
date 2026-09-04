@@ -1,7 +1,7 @@
 {
   "id": "soksak-plugin-process-monitor",
   "name": { "en": "Process Monitor", "ko": "프로세스 모니터" },
-  "version": "0.0.19",
+  "version": "0.0.20",
   "appVersionRequirement": "0.0.1",
   "description": {
     "en": "Read-only view of processes published by installed owners.",
